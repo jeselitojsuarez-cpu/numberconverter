@@ -763,26 +763,22 @@ public class NumberConversion {
         if (showSteps) {
             System.out.println();
             System.out.println("STEP 2: Decimal -> Base " + base);
-            System.out.println("--------------------------------------");
-            System.out.println("Whole-number part: repeated division by " + base);
+            System.out.println("--------------------------------");
+            System.out.println("WHOLE-NUMBER PART");
+            System.out.println("Repeated division by " + base);
             System.out.println();
         }
 
         if (integerPart.equals(BigInteger.ZERO)) {
             integerAnswer = "0";
             if (showSteps) {
-                System.out.println("Whole-number part is 0.");
+                System.out.println("Whole-number part = 0");
             }
         } else {
             StringBuilder reversed = new StringBuilder();
             BigInteger current = integerPart;
             BigInteger baseValue = BigInteger.valueOf(base);
-
-            if (showSteps) {
-                System.out.printf("%-20s %-15s %-15s%n",
-                        "Division", "Quotient", "Remainder");
-                System.out.println("--------------------------------------------------");
-            }
+            int step = 1;
 
             while (current.compareTo(BigInteger.ZERO) > 0) {
                 BigInteger[] qr = current.divideAndRemainder(baseValue);
@@ -794,22 +790,23 @@ public class NumberConversion {
                             ? digitValue + " (" + digit + ")"
                             : String.valueOf(digitValue);
 
-                    System.out.printf("%-20s %-15s %-15s%n",
-                            current + " / " + base,
-                            qr[0],
-                            remDisplay);
+                    // Mobile-friendly format: do not use a wide console table.
+                    System.out.println(step + ". " + current + " / " + base);
+                    System.out.println("   Quotient  = " + qr[0]);
+                    System.out.println("   Remainder = " + remDisplay);
+                    System.out.println();
                 }
 
                 reversed.append(digit);
                 current = qr[0];
+                step++;
             }
 
             integerAnswer = reversed.reverse().toString();
 
             if (showSteps) {
-                System.out.println();
-                System.out.println("Read the whole-number remainders from bottom to top:");
-                System.out.println(integerAnswer);
+                System.out.println("Remainders bottom -> top:");
+                System.out.println("   " + integerAnswer);
             }
         }
 
@@ -820,15 +817,14 @@ public class NumberConversion {
 
             if (showSteps) {
                 System.out.println();
-                System.out.println("Fractional part: repeated multiplication by " + base);
+                System.out.println("FRACTIONAL PART");
+                System.out.println("Repeated multiplication by " + base);
                 System.out.println();
-                System.out.printf("%-22s %-22s %-12s%n",
-                        "Fraction x Base", "Product", "Digit");
-                System.out.println("------------------------------------------------------------");
             }
 
             StringBuilder fracDigits = new StringBuilder();
             int count = 0;
+            int step = 1;
 
             while (!remainder.equals(BigInteger.ZERO)
                     && count < MAX_FRACTION_DIGITS) {
@@ -849,13 +845,15 @@ public class NumberConversion {
                             ? digitValue + " (" + digit + ")"
                             : String.valueOf(digitValue);
 
-                    System.out.printf("%-22s %-22s %-12s%n",
-                            beforeText + " x " + base,
-                            productText,
-                            digitText);
+                    // One calculation per block keeps long values readable on phones.
+                    System.out.println(step + ". " + beforeText + " x " + base);
+                    System.out.println("   Product = " + productText);
+                    System.out.println("   Digit   = " + digitText);
+                    System.out.println();
                 }
 
                 count++;
+                step++;
             }
 
             if (!remainder.equals(BigInteger.ZERO)) {
@@ -865,13 +863,13 @@ public class NumberConversion {
             fractionAnswer = fracDigits.toString();
 
             if (showSteps) {
-                System.out.println();
-                System.out.println("Read the fractional digits from top to bottom:");
-                System.out.println(fractionAnswer + (repeatingOrCut ? "..." : ""));
+                System.out.println("Fraction digits top -> bottom:");
+                System.out.println("   " + fractionAnswer + (repeatingOrCut ? "..." : ""));
 
                 if (repeatingOrCut) {
-                    System.out.println("Note: The fraction repeats or needs more digits;");
-                    System.out.println("showing the first " + MAX_FRACTION_DIGITS + " fractional digits.");
+                    System.out.println();
+                    System.out.println("Note: The fraction repeats or continues.");
+                    System.out.println("Showing the first " + MAX_FRACTION_DIGITS + " digits.");
                 }
             }
         }
@@ -918,10 +916,20 @@ public class NumberConversion {
 
     public static void printFinalAnswer(String originalInput, int sourceBase,
                                         String answer, int targetBase) {
-        System.out.println("======================================");
+        System.out.println("================================");
         System.out.println("FINAL ANSWER");
-        System.out.println("======================================");
-        System.out.println("(" + originalInput + ") source base " + sourceBase
-                + " = (" + answer + ") base " + targetBase);
+        System.out.println("================================");
+        System.out.println("(" + originalInput + ")" + baseSubscript(sourceBase)
+                + " = (" + answer + ")" + baseSubscript(targetBase));
+    }
+
+    public static String baseSubscript(int base) {
+        switch (base) {
+            case 2: return "₂";
+            case 8: return "₈";
+            case 10: return "₁₀";
+            case 16: return "₁₆";
+            default: return " [base " + base + "]";
+        }
     }
 }
