@@ -147,9 +147,10 @@ public class MainActivity extends Activity {
 
         outputText = new TextView(this);
         outputText.setText("Your step-by-step solution will appear here.");
-        outputText.setTextSize(15);
+        outputText.setTextSize(14);
         outputText.setTextColor(Color.rgb(30, 35, 45));
         outputText.setTypeface(Typeface.MONOSPACE);
+        outputText.setLineSpacing(dp(2), 1.08f);
         outputText.setTextIsSelectable(true);
         outputText.setPadding(dp(14), dp(14), dp(14), dp(14));
         outputText.setBackgroundColor(Color.WHITE);
