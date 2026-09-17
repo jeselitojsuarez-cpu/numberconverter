@@ -12,6 +12,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.Spinner;
@@ -147,14 +148,23 @@ public class MainActivity extends Activity {
 
         outputText = new TextView(this);
         outputText.setText("Your step-by-step solution will appear here.");
-        outputText.setTextSize(14);
+        outputText.setTextSize(13);
         outputText.setTextColor(Color.rgb(30, 35, 45));
         outputText.setTypeface(Typeface.MONOSPACE);
         outputText.setLineSpacing(dp(2), 1.08f);
         outputText.setTextIsSelectable(true);
+        outputText.setHorizontallyScrolling(true);
         outputText.setPadding(dp(14), dp(14), dp(14), dp(14));
         outputText.setBackgroundColor(Color.WHITE);
-        root.addView(outputText, matchWrap(0, 0, 0, dp(30)));
+
+        HorizontalScrollView outputScroller = new HorizontalScrollView(this);
+        outputScroller.setFillViewport(false);
+        outputScroller.setHorizontalScrollBarEnabled(true);
+        outputScroller.addView(outputText, new HorizontalScrollView.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        ));
+        root.addView(outputScroller, matchWrap(0, 0, 0, dp(30)));
 
         return page;
     }

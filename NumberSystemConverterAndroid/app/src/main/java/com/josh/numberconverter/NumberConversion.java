@@ -4,6 +4,8 @@ import java.util.Scanner;
 import java.math.BigInteger;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
+import java.util.List;
 
 public class NumberConversion {
 
@@ -778,35 +780,43 @@ public class NumberConversion {
             StringBuilder reversed = new StringBuilder();
             BigInteger current = integerPart;
             BigInteger baseValue = BigInteger.valueOf(base);
-            int step = 1;
+
+            List<String[]> divisionRows = new ArrayList<>();
 
             while (current.compareTo(BigInteger.ZERO) > 0) {
                 BigInteger[] qr = current.divideAndRemainder(baseValue);
                 int digitValue = qr[1].intValue();
                 char digit = digitChar(digitValue);
 
-                if (showSteps) {
-                    String remDisplay = digitValue >= 10
-                            ? digitValue + " (" + digit + ")"
-                            : String.valueOf(digitValue);
+                String remDisplay = digitValue >= 10
+                        ? digitValue + " (" + digit + ")"
+                        : String.valueOf(digitValue);
 
-                    // Mobile-friendly format: do not use a wide console table.
-                    System.out.println(step + ". " + current + " / " + base);
-                    System.out.println("   Quotient  = " + qr[0]);
-                    System.out.println("   Remainder = " + remDisplay);
-                    System.out.println();
+                if (showSteps) {
+                    divisionRows.add(new String[] {
+                            current + " / " + base,
+                            qr[0].toString(),
+                            remDisplay
+                    });
                 }
 
                 reversed.append(digit);
                 current = qr[0];
-                step++;
             }
 
             integerAnswer = reversed.reverse().toString();
 
             if (showSteps) {
-                System.out.println("Remainders bottom -> top:");
-                System.out.println("   " + integerAnswer);
+                printAlignedTable(
+                        new String[] {"Division", "Quotient", "Remainder"},
+                        divisionRows,
+                        5
+                );
+
+                System.out.println();
+                System.out.println("Read the whole-number");
+                System.out.println("remainders from bottom to top:");
+                System.out.println(integerAnswer);
             }
         }
 
@@ -824,7 +834,7 @@ public class NumberConversion {
 
             StringBuilder fracDigits = new StringBuilder();
             int count = 0;
-            int step = 1;
+            List<String[]> fractionRows = new ArrayList<>();
 
             while (!remainder.equals(BigInteger.ZERO)
                     && count < MAX_FRACTION_DIGITS) {
@@ -845,15 +855,14 @@ public class NumberConversion {
                             ? digitValue + " (" + digit + ")"
                             : String.valueOf(digitValue);
 
-                    // One calculation per block keeps long values readable on phones.
-                    System.out.println(step + ". " + beforeText + " x " + base);
-                    System.out.println("   Product = " + productText);
-                    System.out.println("   Digit   = " + digitText);
-                    System.out.println();
+                    fractionRows.add(new String[] {
+                            beforeText + " x " + base,
+                            productText,
+                            digitText
+                    });
                 }
 
                 count++;
-                step++;
             }
 
             if (!remainder.equals(BigInteger.ZERO)) {
@@ -863,8 +872,16 @@ public class NumberConversion {
             fractionAnswer = fracDigits.toString();
 
             if (showSteps) {
-                System.out.println("Fraction digits top -> bottom:");
-                System.out.println("   " + fractionAnswer + (repeatingOrCut ? "..." : ""));
+                printAlignedTable(
+                        new String[] {"Fraction x Base", "Product", "Digit"},
+                        fractionRows,
+                        5
+                );
+
+                System.out.println();
+                System.out.println("Read the fractional digits");
+                System.out.println("from top to bottom:");
+                System.out.println(fractionAnswer + (repeatingOrCut ? "..." : ""));
 
                 if (repeatingOrCut) {
                     System.out.println();
@@ -887,6 +904,69 @@ public class NumberConversion {
         }
 
         return result;
+    }
+
+    public static void printAlignedTable(String[] headers, List<String[]> rows, int gap) {
+        int columnCount = headers.length;
+        int[] widths = new int[columnCount];
+
+        for (int i = 0; i < columnCount; i++) {
+            widths[i] = headers[i].length();
+        }
+
+        for (String[] row : rows) {
+            for (int i = 0; i < columnCount && i < row.length; i++) {
+                widths[i] = Math.max(widths[i], row[i].length());
+            }
+        }
+
+        StringBuilder headerLine = new StringBuilder();
+        for (int i = 0; i < columnCount; i++) {
+            headerLine.append(padRight(headers[i], widths[i]));
+            if (i < columnCount - 1) {
+                headerLine.append(spaces(gap));
+            }
+        }
+        System.out.println(headerLine);
+
+        int totalWidth = 0;
+        for (int width : widths) {
+            totalWidth += width;
+        }
+        totalWidth += gap * (columnCount - 1);
+        System.out.println(repeatChar('-', totalWidth));
+
+        for (String[] row : rows) {
+            StringBuilder line = new StringBuilder();
+            for (int i = 0; i < columnCount; i++) {
+                String value = i < row.length ? row[i] : "";
+                line.append(padRight(value, widths[i]));
+                if (i < columnCount - 1) {
+                    line.append(spaces(gap));
+                }
+            }
+            System.out.println(line);
+        }
+    }
+
+    public static String padRight(String text, int width) {
+        StringBuilder out = new StringBuilder(text == null ? "" : text);
+        while (out.length() < width) {
+            out.append(' ');
+        }
+        return out.toString();
+    }
+
+    public static String spaces(int count) {
+        return repeatChar(' ', count);
+    }
+
+    public static String repeatChar(char ch, int count) {
+        StringBuilder out = new StringBuilder();
+        for (int i = 0; i < count; i++) {
+            out.append(ch);
+        }
+        return out.toString();
     }
 
     public static char digitChar(int value) {
