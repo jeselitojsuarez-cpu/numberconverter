@@ -59,7 +59,7 @@ public class MainActivity extends Activity {
                 ViewGroup.LayoutParams.WRAP_CONTENT));
 
         TextView title = new TextView(this);
-        title.setText("NUMBER SYSTEM CONVERTER");
+        title.setText("JayVie Jabai Scrept");
         title.setTextSize(24);
         title.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
         title.setTextColor(Color.rgb(24, 32, 48));
