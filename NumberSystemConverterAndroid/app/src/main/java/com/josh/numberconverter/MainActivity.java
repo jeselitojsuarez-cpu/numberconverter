@@ -17,6 +17,7 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.ToggleButton;
 import android.widget.Toast;
 
 import java.io.ByteArrayOutputStream;
@@ -28,6 +29,7 @@ public class MainActivity extends Activity {
     private EditText inputNumber;
     private Spinner sourceSpinner;
     private Spinner targetSpinner;
+    private ToggleButton showSolutionToggle;
     private TextView outputText;
 
     private final int[] bases = {2, 8, 10, 16};
@@ -107,6 +109,19 @@ public class MainActivity extends Activity {
         targetSpinner = createBaseSpinner();
         targetSpinner.setSelection(0); // Binary default
         root.addView(targetSpinner, matchWrap(0, 0, 0, dp(18)));
+
+        // Use a full-width ToggleButton so the control is always visible,
+        // even when the Android theme hides the tiny native switch thumb.
+        showSolutionToggle = new ToggleButton(this);
+        showSolutionToggle.setTextOn("SHOW SOLUTION: ON");
+        showSolutionToggle.setTextOff("SHOW SOLUTION: OFF");
+        showSolutionToggle.setTextSize(16);
+        showSolutionToggle.setAllCaps(false);
+        showSolutionToggle.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        showSolutionToggle.setTextColor(Color.rgb(35, 42, 55));
+        showSolutionToggle.setChecked(true);
+        showSolutionToggle.setContentDescription("Show Solution");
+        root.addView(showSolutionToggle, matchWrap(0, 0, 0, dp(18)));
 
         LinearLayout actionRow = new LinearLayout(this);
         actionRow.setOrientation(LinearLayout.HORIZONTAL);
@@ -254,6 +269,19 @@ public class MainActivity extends Activity {
             showError("'" + expression.numberText + "' is not a valid Base " + sourceBase
                     + " number.\nAllowed digits: " + NumberConversion.allowedDigits(sourceBase)
                     + "\nA single decimal point is allowed for fractions.");
+            return;
+        }
+
+        if (!showSolutionToggle.isChecked()) {
+            try {
+                outputText.setText(NumberConversion.performCleanConversion(
+                        expression,
+                        sourceBase,
+                        targetBase
+                ));
+            } catch (Exception ex) {
+                showError("Calculation error: " + ex.getMessage());
+            }
             return;
         }
 
