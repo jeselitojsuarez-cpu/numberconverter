@@ -261,7 +261,7 @@ public class NumberConversion {
         System.out.println("======================================");
         System.out.println("CONVERSION");
         System.out.println("======================================");
-        System.out.println("Input: " + expressionForOutput(expression));
+        System.out.println("Input: " + originalInput);
         System.out.println("Source base: " + sourceBase);
         System.out.println("Target base: " + targetBase);
 
@@ -281,7 +281,7 @@ public class NumberConversion {
             System.out.println("EXPONENT CALCULATION");
             System.out.println("--------------------------------------");
             System.out.println("Expression: " + expression.numberText
-                    + superscriptExponent(expression.exponent));
+                    + " ^ " + expression.exponent);
 
             try {
                 value = baseValue.pow(expression.exponent);
@@ -307,7 +307,7 @@ public class NumberConversion {
         }
 
         System.out.println();
-        printFinalAnswer(expressionForOutput(expression), sourceBase, answer, targetBase);
+        printFinalAnswer(originalInput, sourceBase, answer, targetBase);
     }
 
     // =====================================================
@@ -713,7 +713,7 @@ public class NumberConversion {
                     .multiply(BigInteger.valueOf(base).pow(power));
 
             System.out.println(displayDigit(ch, digit)
-                    + " x " + base + superscriptExponent(power)
+                    + " x " + base + "^" + power
                     + " = " + term);
         }
 
@@ -728,7 +728,7 @@ public class NumberConversion {
             );
 
             System.out.println(displayDigit(ch, digit)
-                    + " x " + base + superscriptExponent(-power)
+                    + " x " + base + "^-" + power
                     + " = " + fractionToReadableDecimal(term));
         }
 
@@ -925,7 +925,7 @@ public class NumberConversion {
         if (expression.hasExponent) {
             value = baseValue.pow(expression.exponent);
             appendCleanLine(output,
-                    expression.numberText + superscriptExponent(expression.exponent)
+                    expression.numberText + " ^ " + expression.exponent
                             + " = " + fractionToBaseString(value, 10, false));
         }
 
@@ -938,14 +938,7 @@ public class NumberConversion {
             answer = appendCleanTargetSteps(output, value, targetBase);
         }
 
-        String originalInput = expressionForOutput(expression);
-
-        appendCleanLine(output, repeatChar('=', 32));
-        appendCleanLine(output, "FINAL ANSWER");
-        appendCleanLine(output, repeatChar('=', 32));
-        appendCleanLine(output,
-                "(" + originalInput + ")" + baseSubscript(sourceBase)
-                        + " = (" + answer + ")" + baseSubscript(targetBase));
+        appendCleanLine(output, "(" + answer + ")" + baseSubscript(targetBase));
         return output.toString().trim();
     }
 
@@ -970,7 +963,7 @@ public class NumberConversion {
             BigInteger term = BigInteger.valueOf(digit)
                     .multiply(BigInteger.valueOf(base).pow(power));
             appendCleanLine(output,
-                    displayDigit(ch, digit) + " x " + base + superscriptExponent(power)
+                    displayDigit(ch, digit) + " x " + base + "^" + power
                             + " = " + term);
         }
 
@@ -982,7 +975,7 @@ public class NumberConversion {
                     BigInteger.valueOf(digit),
                     BigInteger.valueOf(base).pow(power));
             appendCleanLine(output,
-                    displayDigit(ch, digit) + " x " + base + superscriptExponent(-power)
+                    displayDigit(ch, digit) + " x " + base + "^-" + power
                             + " = " + fractionToReadableDecimal(term));
         }
     }
@@ -1136,39 +1129,6 @@ public class NumberConversion {
             return (char) ('0' + value);
         }
         return (char) ('A' + (value - 10));
-    }
-
-    private static String superscriptExponent(int exponent) {
-        String normal = Integer.toString(exponent);
-        StringBuilder result = new StringBuilder();
-
-        for (int i = 0; i < normal.length(); i++) {
-            char ch = normal.charAt(i);
-            switch (ch) {
-                case '-': result.append('⁻'); break;
-                case '0': result.append('⁰'); break;
-                case '1': result.append('¹'); break;
-                case '2': result.append('²'); break;
-                case '3': result.append('³'); break;
-                case '4': result.append('⁴'); break;
-                case '5': result.append('⁵'); break;
-                case '6': result.append('⁶'); break;
-                case '7': result.append('⁷'); break;
-                case '8': result.append('⁸'); break;
-                case '9': result.append('⁹'); break;
-                default: result.append(ch); break;
-            }
-        }
-
-        return result.toString();
-    }
-
-    private static String expressionForOutput(ParsedExpression expression) {
-        String result = expression.numberText;
-        if (expression.hasExponent) {
-            result += superscriptExponent(expression.exponent);
-        }
-        return result;
     }
 
     // =====================================================
