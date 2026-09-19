@@ -906,6 +906,161 @@ public class NumberConversion {
         return result;
     }
 
+    // =====================================================
+    // CLEAN OUTPUT (NO EXPLANATION LABELS)
+    // =====================================================
+    public static String performCleanConversion(
+            ParsedExpression expression,
+            int sourceBase,
+            int targetBase) {
+
+        StringBuilder output = new StringBuilder();
+        Fraction baseValue = parseToFraction(expression.numberText, sourceBase);
+        Fraction value = baseValue;
+
+        if (sourceBase != 10) {
+            appendCleanSourceSteps(output, expression.numberText, sourceBase);
+        }
+
+        if (expression.hasExponent) {
+            value = baseValue.pow(expression.exponent);
+            appendCleanLine(output,
+                    expression.numberText + " ^ " + expression.exponent
+                            + " = " + fractionToBaseString(value, 10, false));
+        }
+
+        String answer;
+        if (sourceBase == targetBase && !expression.hasExponent) {
+            answer = expression.numberText;
+        } else if (targetBase == 10) {
+            answer = fractionToBaseString(value, 10, false);
+        } else {
+            answer = appendCleanTargetSteps(output, value, targetBase);
+        }
+
+        appendCleanLine(output, "(" + answer + ")" + baseSubscript(targetBase));
+        return output.toString().trim();
+    }
+
+    private static void appendCleanSourceSteps(
+            StringBuilder output,
+            String input,
+            int base) {
+
+        String number = input;
+        if (number.startsWith("-") || number.startsWith("+")) {
+            number = number.substring(1);
+        }
+
+        String[] parts = number.split("\\.", -1);
+        String integerPart = parts[0].isEmpty() ? "0" : parts[0];
+        String fractionPart = parts.length > 1 ? parts[1] : "";
+
+        for (int i = 0; i < integerPart.length(); i++) {
+            char ch = integerPart.charAt(i);
+            int digit = Character.digit(ch, base);
+            int power = integerPart.length() - 1 - i;
+            BigInteger term = BigInteger.valueOf(digit)
+                    .multiply(BigInteger.valueOf(base).pow(power));
+            appendCleanLine(output,
+                    displayDigit(ch, digit) + " x " + base + "^" + power
+                            + " = " + term);
+        }
+
+        for (int i = 0; i < fractionPart.length(); i++) {
+            char ch = fractionPart.charAt(i);
+            int digit = Character.digit(ch, base);
+            int power = i + 1;
+            Fraction term = new Fraction(
+                    BigInteger.valueOf(digit),
+                    BigInteger.valueOf(base).pow(power));
+            appendCleanLine(output,
+                    displayDigit(ch, digit) + " x " + base + "^-" + power
+                            + " = " + fractionToReadableDecimal(term));
+        }
+    }
+
+    private static String appendCleanTargetSteps(
+            StringBuilder output,
+            Fraction value,
+            int base) {
+
+        boolean negative = value.isNegative();
+        Fraction absolute = value.abs();
+        BigInteger numerator = absolute.numerator;
+        BigInteger denominator = absolute.denominator;
+        BigInteger integerPart = numerator.divide(denominator);
+        BigInteger remainder = numerator.remainder(denominator);
+        BigInteger baseValue = BigInteger.valueOf(base);
+
+        StringBuilder reversedInteger = new StringBuilder();
+        BigInteger current = integerPart;
+
+        while (current.compareTo(BigInteger.ZERO) > 0) {
+            BigInteger[] quotientAndRemainder = current.divideAndRemainder(baseValue);
+            char digit = digitChar(quotientAndRemainder[1].intValue());
+            appendCleanLine(output,
+                    current + " / " + base + " = "
+                            + quotientAndRemainder[0] + " R " + digit);
+            reversedInteger.append(digit);
+            current = quotientAndRemainder[0];
+        }
+
+        String integerAnswer = reversedInteger.length() == 0
+                ? "0"
+                : reversedInteger.reverse().toString();
+        String signedInteger = negative && !integerAnswer.equals("0")
+                ? "-" + integerAnswer
+                : integerAnswer;
+
+        appendCleanLine(output, "(" + signedInteger + ")" + baseSubscript(base));
+
+        StringBuilder fractionAnswer = new StringBuilder();
+        int count = 0;
+        while (!remainder.equals(BigInteger.ZERO)
+                && count < MAX_FRACTION_DIGITS) {
+
+            BigInteger before = remainder;
+            BigInteger multiplied = before.multiply(baseValue);
+            BigInteger digitValue = multiplied.divide(denominator);
+            remainder = multiplied.remainder(denominator);
+            char digit = digitChar(digitValue.intValue());
+            fractionAnswer.append(digit);
+
+            appendCleanLine(output,
+                    rationalToReadableDecimal(before, denominator)
+                            + " x " + base + " = "
+                            + rationalToReadableDecimal(multiplied, denominator)
+                            + " " + digit);
+            count++;
+        }
+
+        if (fractionAnswer.length() > 0) {
+            String fractionText = fractionAnswer.toString();
+            if (!remainder.equals(BigInteger.ZERO)) {
+                fractionText += "...";
+            }
+            appendCleanLine(output,
+                    "(" + fractionText + ")" + baseSubscript(base));
+        }
+
+        String result = signedInteger;
+        if (fractionAnswer.length() > 0) {
+            result += "." + fractionAnswer;
+            if (!remainder.equals(BigInteger.ZERO)) {
+                result += "...";
+            }
+        }
+        return result;
+    }
+
+    private static void appendCleanLine(StringBuilder output, String line) {
+        if (output.length() > 0) {
+            output.append('\n');
+        }
+        output.append(line);
+    }
+
     public static void printAlignedTable(String[] headers, List<String[]> rows, int gap) {
         int columnCount = headers.length;
         int[] widths = new int[columnCount];
