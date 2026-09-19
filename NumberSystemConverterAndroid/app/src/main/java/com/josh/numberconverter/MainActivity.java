@@ -1,14 +1,19 @@
 package com.josh.numberconverter;
 
 import android.app.Activity;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
+import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.RippleDrawable;
 import android.os.Bundle;
 import android.text.InputType;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -16,8 +21,8 @@ import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.Spinner;
+import android.widget.Switch;
 import android.widget.TextView;
-import android.widget.ToggleButton;
 import android.widget.Toast;
 
 import java.io.ByteArrayOutputStream;
@@ -26,10 +31,19 @@ import java.nio.charset.StandardCharsets;
 
 public class MainActivity extends Activity {
 
+    private static final int BACKGROUND = Color.rgb(10, 16, 31);
+    private static final int CARD = Color.rgb(19, 29, 49);
+    private static final int CARD_LIGHT = Color.rgb(27, 40, 65);
+    private static final int BORDER = Color.rgb(49, 67, 96);
+    private static final int PRIMARY = Color.rgb(91, 104, 255);
+    private static final int TEXT = Color.rgb(244, 247, 255);
+    private static final int MUTED = Color.rgb(154, 169, 197);
+    private static final int SUCCESS = Color.rgb(86, 220, 169);
+
     private EditText inputNumber;
     private Spinner sourceSpinner;
     private Spinner targetSpinner;
-    private ToggleButton showSolutionToggle;
+    private Switch showSolutionToggle;
     private TextView outputText;
 
     private final int[] bases = {2, 8, 10, 16};
@@ -43,166 +57,284 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getWindow().setStatusBarColor(BACKGROUND);
+        getWindow().setNavigationBarColor(BACKGROUND);
+        getWindow().getDecorView().setSystemUiVisibility(0);
         setContentView(buildUi());
     }
 
     private View buildUi() {
-        int pad = dp(18);
+        int pagePad = dp(18);
 
         ScrollView page = new ScrollView(this);
         page.setFillViewport(true);
-        page.setBackgroundColor(Color.rgb(245, 247, 251));
+        page.setBackgroundColor(BACKGROUND);
+        page.setClipToPadding(false);
+        page.setPadding(0, 0, 0, dp(12));
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(pad, pad, pad, pad);
+        root.setPadding(pagePad, dp(22), pagePad, dp(28));
         page.addView(root, new ScrollView.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT));
 
-        TextView title = new TextView(this);
-        title.setText("JayVie Jabai Scrept");
-        title.setTextSize(24);
-        title.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
-        title.setTextColor(Color.rgb(24, 32, 48));
-        title.setGravity(Gravity.CENTER);
-        root.addView(title, matchWrap(0, 0, 0, dp(20)));
+        TextView eyebrow = label("JJS • STUDY TOOL", 12, PRIMARY, true);
+        eyebrow.setLetterSpacing(0.12f);
+        root.addView(eyebrow, matchWrap(0, 0, 0, dp(8)));
 
-        TextView subtitle = new TextView(this);
-        subtitle.setText("Binary • Octal • Decimal • Hexadecimal\nFractions and exponents supported");
-        subtitle.setTextSize(14);
-        subtitle.setTextColor(Color.DKGRAY);
-        subtitle.setGravity(Gravity.CENTER);
+        // Keep the requested title exactly as provided by the user.
+        TextView title = label("JayVie Jabai Scrept", 29, TEXT, true);
+        root.addView(title, matchWrap(0, 0, 0, dp(5)));
+
+        TextView subtitle = label("Convert number systems with clean answers and guided steps.", 14, MUTED, false);
+        subtitle.setLineSpacing(0, 1.1f);
         root.addView(subtitle, matchWrap(0, 0, 0, dp(22)));
 
-        addLabel(root, "Enter number / expression");
-        inputNumber = new EditText(this);
-        inputNumber.setHint("Examples: 110101.11, A3.F, 2³, (101101)₂");
-        inputNumber.setSingleLine(true);
-        inputNumber.setTextSize(18);
-        inputNumber.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
-        inputNumber.setPadding(dp(12), dp(12), dp(12), dp(12));
-        root.addView(inputNumber, matchWrap(0, 0, 0, dp(14)));
+        LinearLayout inputCard = card();
+        addSectionLabel(inputCard, "INPUT NUMBER / EXPRESSION");
 
+        inputNumber = new EditText(this);
+        inputNumber.setHint("Example: 110101, A3.F, 2³ or (101101)₂");
+        inputNumber.setHintTextColor(Color.rgb(111, 130, 162));
+        inputNumber.setTextColor(TEXT);
+        inputNumber.setSingleLine(true);
+        inputNumber.setTextSize(17);
+        inputNumber.setTypeface(Typeface.MONOSPACE, Typeface.NORMAL);
+        inputNumber.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+        inputNumber.setPadding(dp(14), dp(14), dp(14), dp(14));
+        inputNumber.setBackground(outlineBackground(CARD_LIGHT, BORDER, dp(14)));
+        inputCard.addView(inputNumber, matchWrap(0, 0, 0, dp(13)));
+
+        TextView symbolsHint = label("QUICK SYMBOLS", 11, MUTED, true);
+        symbolsHint.setLetterSpacing(0.08f);
+        inputCard.addView(symbolsHint, matchWrap(0, 0, 0, dp(7)));
+
+        HorizontalScrollView symbolScroller = new HorizontalScrollView(this);
+        symbolScroller.setHorizontalScrollBarEnabled(false);
         LinearLayout symbolRow = new LinearLayout(this);
         symbolRow.setOrientation(LinearLayout.HORIZONTAL);
-        symbolRow.setGravity(Gravity.CENTER);
         String[] symbols = {"²", "³", "⁻", "₂", "₈", "₁₀", "₁₆"};
         for (String symbol : symbols) {
-            Button b = new Button(this);
-            b.setText(symbol);
-            b.setTextSize(15);
-            b.setAllCaps(false);
-            b.setOnClickListener(v -> appendSymbol(symbol));
-            LinearLayout.LayoutParams bp = new LinearLayout.LayoutParams(0, dp(44), 1f);
-            bp.setMargins(dp(2), 0, dp(2), 0);
-            symbolRow.addView(b, bp);
+            TextView chip = chip(symbol);
+            chip.setOnClickListener(v -> appendSymbol(symbol));
+            LinearLayout.LayoutParams chipParams = new LinearLayout.LayoutParams(dp(48), dp(42));
+            chipParams.setMargins(0, 0, dp(8), 0);
+            symbolRow.addView(chip, chipParams);
         }
-        root.addView(symbolRow, matchWrap(0, 0, 0, dp(18)));
+        symbolScroller.addView(symbolRow, new HorizontalScrollView.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        inputCard.addView(symbolScroller);
+        root.addView(inputCard, matchWrap(0, 0, 0, dp(14)));
 
-        addLabel(root, "Source base");
+        LinearLayout conversionCard = card();
+        addSectionLabel(conversionCard, "CONVERT FROM  →  TO");
+
+        LinearLayout baseRow = new LinearLayout(this);
+        baseRow.setGravity(Gravity.CENTER_VERTICAL);
+        baseRow.setOrientation(LinearLayout.HORIZONTAL);
+
         sourceSpinner = createBaseSpinner();
-        sourceSpinner.setSelection(2); // Decimal default
-        root.addView(sourceSpinner, matchWrap(0, 0, 0, dp(14)));
+        sourceSpinner.setSelection(2);
+        baseRow.addView(sourceSpinner, weightWrap(1, 0, dp(5), 0));
 
-        addLabel(root, "Target base");
+        TextView swapIcon = label("⇄", 27, PRIMARY, true);
+        swapIcon.setGravity(Gravity.CENTER);
+        swapIcon.setContentDescription("Swap source and target bases");
+        swapIcon.setOnClickListener(v -> swapBases());
+        baseRow.addView(swapIcon, new LinearLayout.LayoutParams(dp(48), dp(52)));
+
         targetSpinner = createBaseSpinner();
-        targetSpinner.setSelection(0); // Binary default
-        root.addView(targetSpinner, matchWrap(0, 0, 0, dp(18)));
+        targetSpinner.setSelection(0);
+        baseRow.addView(targetSpinner, weightWrap(1, dp(5), 0, 0));
+        conversionCard.addView(baseRow);
 
-        // Use a full-width ToggleButton so the control is always visible,
-        // even when the Android theme hides the tiny native switch thumb.
-        showSolutionToggle = new ToggleButton(this);
-        showSolutionToggle.setTextOn("SHOW SOLUTION: ON");
-        showSolutionToggle.setTextOff("SHOW SOLUTION: OFF");
-        showSolutionToggle.setTextSize(16);
-        showSolutionToggle.setAllCaps(false);
-        showSolutionToggle.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
-        showSolutionToggle.setTextColor(Color.rgb(35, 42, 55));
+        LinearLayout solutionRow = new LinearLayout(this);
+        solutionRow.setGravity(Gravity.CENTER_VERTICAL);
+        solutionRow.setPadding(0, dp(14), 0, 0);
+
+        LinearLayout solutionText = new LinearLayout(this);
+        solutionText.setOrientation(LinearLayout.VERTICAL);
+        TextView solutionTitle = label("Show solution", 15, TEXT, true);
+        TextView solutionSubtitle = label("Display the step-by-step process", 12, MUTED, false);
+        solutionText.addView(solutionTitle);
+        solutionText.addView(solutionSubtitle, matchWrap(0, dp(3), 0, 0));
+        solutionRow.addView(solutionText, weightWrap(1, 0, dp(8), 0));
+
+        showSolutionToggle = new Switch(this);
         showSolutionToggle.setChecked(true);
-        showSolutionToggle.setContentDescription("Show Solution");
-        root.addView(showSolutionToggle, matchWrap(0, 0, 0, dp(18)));
+        showSolutionToggle.setContentDescription("Show solution");
+        showSolutionToggle.setButtonTintList(new ColorStateList(
+                new int[][]{new int[]{android.R.attr.state_checked}, new int[]{}},
+                new int[]{PRIMARY, MUTED}));
+        solutionRow.addView(showSolutionToggle, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, dp(48)));
+        conversionCard.addView(solutionRow);
+        root.addView(conversionCard, matchWrap(0, 0, 0, dp(14)));
 
         LinearLayout actionRow = new LinearLayout(this);
         actionRow.setOrientation(LinearLayout.HORIZONTAL);
 
-        Button calculate = new Button(this);
-        calculate.setText("CALCULATE");
-        calculate.setTextSize(16);
+        Button calculate = actionButton("Convert", PRIMARY, TEXT);
         calculate.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
         calculate.setOnClickListener(v -> calculate());
-        LinearLayout.LayoutParams calcParams = new LinearLayout.LayoutParams(0, dp(54), 2f);
-        calcParams.setMargins(0, 0, dp(6), 0);
-        actionRow.addView(calculate, calcParams);
+        actionRow.addView(calculate, weightWrap(1, 0, dp(5), 0));
 
-        Button swap = new Button(this);
-        swap.setText("SWAP");
-        swap.setAllCaps(false);
-        swap.setOnClickListener(v -> swapBases());
-        LinearLayout.LayoutParams swapParams = new LinearLayout.LayoutParams(0, dp(54), 1f);
-        swapParams.setMargins(dp(6), 0, 0, 0);
-        actionRow.addView(swap, swapParams);
-
-        root.addView(actionRow, matchWrap(0, 0, 0, dp(18)));
-
-        Button clear = new Button(this);
-        clear.setText("Clear");
-        clear.setAllCaps(false);
+        Button clear = actionButton("Clear", CARD, TEXT);
+        clear.setBackground(outlineBackground(CARD, BORDER, dp(14)));
         clear.setOnClickListener(v -> {
             inputNumber.setText("");
-            outputText.setText("Your step-by-step solution will appear here.");
+            outputText.setText("Your converted answer will appear here.");
         });
-        root.addView(clear, matchWrap(0, 0, 0, dp(20)));
+        actionRow.addView(clear, weightWrap(1, dp(5), 0, 0));
+        root.addView(actionRow, matchWrap(0, 0, 0, dp(18)));
 
-        TextView resultLabel = new TextView(this);
-        resultLabel.setText("SOLUTION");
-        resultLabel.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
-        resultLabel.setTextSize(16);
-        resultLabel.setTextColor(Color.rgb(24, 32, 48));
-        root.addView(resultLabel, matchWrap(0, 0, 0, dp(8)));
+        LinearLayout resultCard = card();
+        LinearLayout resultHeader = new LinearLayout(this);
+        resultHeader.setGravity(Gravity.CENTER_VERTICAL);
+
+        LinearLayout resultTitleGroup = new LinearLayout(this);
+        resultTitleGroup.setOrientation(LinearLayout.VERTICAL);
+        TextView resultLabel = label("RESULT", 12, SUCCESS, true);
+        resultLabel.setLetterSpacing(0.1f);
+        TextView resultSubtitle = label("Your answer and solution", 13, MUTED, false);
+        resultTitleGroup.addView(resultLabel);
+        resultTitleGroup.addView(resultSubtitle, matchWrap(0, dp(3), 0, 0));
+        resultHeader.addView(resultTitleGroup, weightWrap(1, 0, dp(8), 0));
+
+        Button copy = smallButton("Copy");
+        copy.setOnClickListener(v -> copyResult());
+        resultHeader.addView(copy, new LinearLayout.LayoutParams(dp(74), dp(40)));
+        resultCard.addView(resultHeader, matchWrap(0, 0, 0, dp(12)));
 
         outputText = new TextView(this);
-        outputText.setText("Your step-by-step solution will appear here.");
-        outputText.setTextSize(13);
-        outputText.setTextColor(Color.rgb(30, 35, 45));
-        outputText.setTypeface(Typeface.MONOSPACE);
-        outputText.setLineSpacing(dp(2), 1.08f);
+        outputText.setText("Your converted answer will appear here.");
+        outputText.setTextSize(14);
+        outputText.setTextColor(TEXT);
+        outputText.setTypeface(Typeface.MONOSPACE, Typeface.NORMAL);
+        outputText.setLineSpacing(dp(3), 1.08f);
         outputText.setTextIsSelectable(true);
         outputText.setHorizontallyScrolling(true);
+        outputText.setMinWidth(dp(260));
         outputText.setPadding(dp(14), dp(14), dp(14), dp(14));
-        outputText.setBackgroundColor(Color.WHITE);
+        outputText.setBackground(outlineBackground(Color.rgb(14, 22, 39), BORDER, dp(12)));
 
         HorizontalScrollView outputScroller = new HorizontalScrollView(this);
-        outputScroller.setFillViewport(false);
+        outputScroller.setFillViewport(true);
         outputScroller.setHorizontalScrollBarEnabled(true);
         outputScroller.addView(outputText, new HorizontalScrollView.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-        ));
-        root.addView(outputScroller, matchWrap(0, 0, 0, dp(30)));
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        resultCard.addView(outputScroller, matchWrap(0, 0, 0, 0));
+        root.addView(resultCard, matchWrap(0, 0, 0, dp(14)));
+
+        TextView tip = label("TIP  •  Turn on Show solution when studying the conversion process.", 12, MUTED, false);
+        tip.setGravity(Gravity.CENTER);
+        tip.setPadding(dp(4), dp(4), dp(4), dp(4));
+        root.addView(tip, matchWrap(0, 0, 0, 0));
 
         return page;
     }
 
+    private LinearLayout card() {
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setPadding(dp(15), dp(15), dp(15), dp(15));
+        layout.setBackground(outlineBackground(CARD, BORDER, dp(18)));
+        return layout;
+    }
+
+    private TextView label(String text, int size, int color, boolean bold) {
+        TextView view = new TextView(this);
+        view.setText(text);
+        view.setTextSize(size);
+        view.setTextColor(color);
+        view.setTypeface(Typeface.DEFAULT, bold ? Typeface.BOLD : Typeface.NORMAL);
+        return view;
+    }
+
+    private void addSectionLabel(LinearLayout parent, String text) {
+        TextView view = label(text, 11, MUTED, true);
+        view.setLetterSpacing(0.08f);
+        parent.addView(view, matchWrap(0, 0, 0, dp(10)));
+    }
+
+    private TextView chip(String text) {
+        TextView view = label(text, 16, TEXT, true);
+        view.setGravity(Gravity.CENTER);
+        view.setBackground(rippleBackground(CARD_LIGHT, BORDER, dp(12)));
+        view.setClickable(true);
+        view.setFocusable(true);
+        return view;
+    }
+
+    private Button actionButton(String text, int color, int textColor) {
+        Button button = new Button(this);
+        button.setText(text);
+        button.setTextSize(15);
+        button.setTextColor(textColor);
+        button.setAllCaps(false);
+        button.setMinHeight(0);
+        button.setMinimumHeight(0);
+        button.setPadding(dp(12), 0, dp(12), 0);
+        button.setBackground(rippleBackground(color, color, dp(14)));
+        return button;
+    }
+
+    private Button smallButton(String text) {
+        Button button = actionButton(text, CARD_LIGHT, TEXT);
+        button.setTextSize(12);
+        button.setPadding(0, 0, 0, 0);
+        return button;
+    }
+
     private Spinner createBaseSpinner() {
         Spinner spinner = new Spinner(this);
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(
-                this,
-                android.R.layout.simple_spinner_item,
-                baseLabels
-        );
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(
+                this, android.R.layout.simple_spinner_item, baseLabels) {
+            @Override
+            public View getView(int position, View convertView, ViewGroup parent) {
+                TextView view = spinnerText(getItem(position));
+                view.setTextColor(TEXT);
+                return view;
+            }
+
+            @Override
+            public View getDropDownView(int position, View convertView, ViewGroup parent) {
+                TextView view = spinnerText(getItem(position));
+                view.setTextColor(TEXT);
+                view.setBackgroundColor(CARD_LIGHT);
+                return view;
+            }
+        };
         spinner.setAdapter(adapter);
+        spinner.setBackground(outlineBackground(CARD_LIGHT, BORDER, dp(13)));
+        spinner.setPadding(dp(8), 0, dp(7), 0);
         return spinner;
     }
 
-    private void addLabel(LinearLayout parent, String text) {
-        TextView label = new TextView(this);
-        label.setText(text);
-        label.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
-        label.setTextSize(14);
-        label.setTextColor(Color.rgb(55, 62, 75));
-        parent.addView(label, matchWrap(0, 0, 0, dp(6)));
+    private TextView spinnerText(String text) {
+        TextView view = label(text, 13, TEXT, true);
+        view.setGravity(Gravity.CENTER_VERTICAL);
+        view.setSingleLine(true);
+        view.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        view.setPadding(dp(8), 0, dp(4), 0);
+        return view;
+    }
+
+    private GradientDrawable outlineBackground(int fill, int stroke, int radius) {
+        GradientDrawable drawable = new GradientDrawable();
+        drawable.setColor(fill);
+        drawable.setCornerRadius(radius);
+        drawable.setStroke(dp(1), stroke);
+        return drawable;
+    }
+
+    private RippleDrawable rippleBackground(int fill, int stroke, int radius) {
+        return new RippleDrawable(
+                ColorStateList.valueOf(Color.argb(45, 255, 255, 255)),
+                outlineBackground(fill, stroke, radius),
+                null
+        );
     }
 
     private LinearLayout.LayoutParams matchWrap(int l, int t, int r, int b) {
@@ -211,6 +343,12 @@ public class MainActivity extends Activity {
                 ViewGroup.LayoutParams.WRAP_CONTENT
         );
         p.setMargins(l, t, r, b);
+        return p;
+    }
+
+    private LinearLayout.LayoutParams weightWrap(float weight, int l, int r, int b) {
+        LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(0, dp(52), weight);
+        p.setMargins(l, 0, r, b);
         return p;
     }
 
@@ -225,6 +363,7 @@ public class MainActivity extends Activity {
         String current = inputNumber.getText().toString();
         inputNumber.setText(current.substring(0, start) + symbol + current.substring(end));
         inputNumber.setSelection(start + symbol.length());
+        inputNumber.requestFocus();
     }
 
     private void swapBases() {
@@ -232,6 +371,17 @@ public class MainActivity extends Activity {
         int target = targetSpinner.getSelectedItemPosition();
         sourceSpinner.setSelection(target);
         targetSpinner.setSelection(source);
+    }
+
+    private void copyResult() {
+        String result = outputText == null ? "" : outputText.getText().toString();
+        if (result.trim().isEmpty() || result.startsWith("Your converted answer")) {
+            Toast.makeText(this, "Convert a number first", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+        clipboard.setPrimaryClip(ClipData.newPlainText("Number conversion result", result));
+        Toast.makeText(this, "Result copied", Toast.LENGTH_SHORT).show();
     }
 
     private void calculate() {
@@ -247,7 +397,6 @@ public class MainActivity extends Activity {
         NumberConversion.ParsedInput parsedInput = NumberConversion.parseOptionalBaseSuffix(rawInput);
         int sourceBase = parsedInput.annotatedBase != null ? parsedInput.annotatedBase : selectedSource;
 
-        // If the number itself has a base suffix, use it automatically in the UI.
         if (parsedInput.annotatedBase != null) {
             setSpinnerToBase(sourceSpinner, sourceBase);
         }
