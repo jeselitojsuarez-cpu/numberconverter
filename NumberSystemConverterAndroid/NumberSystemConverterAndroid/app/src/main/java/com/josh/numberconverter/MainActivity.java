@@ -16,8 +16,8 @@ import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.Spinner;
-import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.ToggleButton;
 import android.widget.Toast;
 
 import java.io.ByteArrayOutputStream;
@@ -29,7 +29,7 @@ public class MainActivity extends Activity {
     private EditText inputNumber;
     private Spinner sourceSpinner;
     private Spinner targetSpinner;
-    private Switch showSolutionToggle;
+    private ToggleButton showSolutionToggle;
     private TextView outputText;
 
     private final int[] bases = {2, 8, 10, 16};
@@ -110,32 +110,18 @@ public class MainActivity extends Activity {
         targetSpinner.setSelection(0); // Binary default
         root.addView(targetSpinner, matchWrap(0, 0, 0, dp(18)));
 
-        // Keep the label separate from the native switch so the control remains
-        // obvious on Android versions where a Switch's text can be clipped.
-        LinearLayout solutionRow = new LinearLayout(this);
-        solutionRow.setOrientation(LinearLayout.HORIZONTAL);
-        solutionRow.setGravity(Gravity.CENTER_VERTICAL);
-        solutionRow.setMinimumHeight(dp(52));
-        solutionRow.setPadding(dp(10), 0, dp(6), 0);
-        solutionRow.setBackgroundColor(Color.WHITE);
-
-        TextView solutionLabel = new TextView(this);
-        solutionLabel.setText("Show Solution");
-        solutionLabel.setTextSize(17);
-        solutionLabel.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
-        solutionLabel.setTextColor(Color.rgb(55, 62, 75));
-        solutionRow.addView(solutionLabel, new LinearLayout.LayoutParams(
-                0, dp(52), 1f
-        ));
-
-        showSolutionToggle = new Switch(this);
+        // Use a full-width ToggleButton so the control is always visible,
+        // even when the Android theme hides the tiny native switch thumb.
+        showSolutionToggle = new ToggleButton(this);
+        showSolutionToggle.setTextOn("SHOW SOLUTION: ON");
+        showSolutionToggle.setTextOff("SHOW SOLUTION: OFF");
+        showSolutionToggle.setTextSize(16);
+        showSolutionToggle.setAllCaps(false);
+        showSolutionToggle.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        showSolutionToggle.setTextColor(Color.rgb(35, 42, 55));
         showSolutionToggle.setChecked(true);
         showSolutionToggle.setContentDescription("Show Solution");
-        solutionRow.addView(showSolutionToggle, new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, dp(52)
-        ));
-
-        root.addView(solutionRow, matchWrap(0, 0, 0, dp(18)));
+        root.addView(showSolutionToggle, matchWrap(0, 0, 0, dp(18)));
 
         LinearLayout actionRow = new LinearLayout(this);
         actionRow.setOrientation(LinearLayout.HORIZONTAL);
