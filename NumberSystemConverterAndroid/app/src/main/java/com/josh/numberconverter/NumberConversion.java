@@ -938,7 +938,17 @@ public class NumberConversion {
             answer = appendCleanTargetSteps(output, value, targetBase);
         }
 
-        appendCleanLine(output, "(" + answer + ")" + baseSubscript(targetBase));
+        String originalInput = expression.numberText;
+        if (expression.hasExponent) {
+            originalInput += expression.exponentDisplay;
+        }
+
+        appendCleanLine(output, repeatChar('=', 32));
+        appendCleanLine(output, "FINAL ANSWER");
+        appendCleanLine(output, repeatChar('=', 32));
+        appendCleanLine(output,
+                "(" + originalInput + ")" + baseSubscript(sourceBase)
+                        + " = (" + answer + ")" + baseSubscript(targetBase));
         return output.toString().trim();
     }
 
