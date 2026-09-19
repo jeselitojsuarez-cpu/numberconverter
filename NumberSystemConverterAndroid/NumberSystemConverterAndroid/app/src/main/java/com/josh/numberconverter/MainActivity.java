@@ -110,12 +110,32 @@ public class MainActivity extends Activity {
         targetSpinner.setSelection(0); // Binary default
         root.addView(targetSpinner, matchWrap(0, 0, 0, dp(18)));
 
+        // Keep the label separate from the native switch so the control remains
+        // obvious on Android versions where a Switch's text can be clipped.
+        LinearLayout solutionRow = new LinearLayout(this);
+        solutionRow.setOrientation(LinearLayout.HORIZONTAL);
+        solutionRow.setGravity(Gravity.CENTER_VERTICAL);
+        solutionRow.setMinimumHeight(dp(52));
+        solutionRow.setPadding(dp(10), 0, dp(6), 0);
+        solutionRow.setBackgroundColor(Color.WHITE);
+
+        TextView solutionLabel = new TextView(this);
+        solutionLabel.setText("Show Solution");
+        solutionLabel.setTextSize(17);
+        solutionLabel.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        solutionLabel.setTextColor(Color.rgb(55, 62, 75));
+        solutionRow.addView(solutionLabel, new LinearLayout.LayoutParams(
+                0, dp(52), 1f
+        ));
+
         showSolutionToggle = new Switch(this);
-        showSolutionToggle.setText("Show Solution");
-        showSolutionToggle.setTextSize(16);
-        showSolutionToggle.setTextColor(Color.rgb(55, 62, 75));
         showSolutionToggle.setChecked(true);
-        root.addView(showSolutionToggle, matchWrap(0, 0, 0, dp(18)));
+        showSolutionToggle.setContentDescription("Show Solution");
+        solutionRow.addView(showSolutionToggle, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, dp(52)
+        ));
+
+        root.addView(solutionRow, matchWrap(0, 0, 0, dp(18)));
 
         LinearLayout actionRow = new LinearLayout(this);
         actionRow.setOrientation(LinearLayout.HORIZONTAL);
